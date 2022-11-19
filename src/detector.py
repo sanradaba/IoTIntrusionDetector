@@ -11,28 +11,12 @@ from packet_capture import PacketCapture
 from arp_spoof import ArpSpoof
 # from data_upload import DataUploader
 from netdisco_wrapper import NetdiscoWrapper
+from naming import ConstantsNamespace
 import subprocess
 import sys
 import logging
 # import server_config
 import webserver
-
-
-WINDOWS_STARTUP_TEXT = """
-
-======================================
-IoT Detector de intrusiones para Windows 10
-======================================
-
-We have also opened a new browser window for you to view the IoT Inspector report. If you don't see a new browser window, use the following private link:
-
-{0}/user/{1}
-
-To stop IoT Inspector, simply close this window or hit Control + C.
-
-Questions? Email us at iot-inspector@lists.cs.princeton.edu.
-
-"""
 
 
 def start():
@@ -54,6 +38,7 @@ def start():
     # state.secret_salt = config_dict['secret_salt']
     state.host_mac = utils.get_my_mac()
     state.gateway_ip, _, state.host_ip = utils.get_default_route()
+    state.net, state.mask = utils.get_net_and_mask()
 
     assert utils.is_ipv4_addr(state.gateway_ip)
     assert utils.is_ipv4_addr(state.host_ip)
@@ -74,8 +59,8 @@ def start():
     syn_scan_thread.start()
 
     # # Continuously gather SSDP data
-    # netdisco_thread = NetdiscoWrapper(state)
-    # netdisco_thread.start()
+    netdisco_thread = NetdiscoWrapper(state)
+    netdisco_thread.start()
 
     # Continuously capture packets
     packet_capture_thread = PacketCapture(state)
@@ -97,9 +82,9 @@ def start():
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
     except Exception:
         pass
-    
 
-    print('Ready. To test if the API works, visit http://127.0.0.1:46241/get_device_list')
+    console_message = "Ready. To test if the API works, visit http://127.0.0.1:{:}/get_device_list"
+    print(console_message.format(ConstantsNamespace().PORT))
 
     return state
 
@@ -130,3 +115,5 @@ def disable_ip_forwarding():
         cmd = ['powershell', 'Set-NetIPInterface', '-Forwarding', 'Disabled']
 
     assert subprocess.call(cmd) == 0
+
+

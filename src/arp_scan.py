@@ -16,7 +16,7 @@ FAST_SCAN_SLEEP_TIME = 0.1
 SLOW_SCAN_SLEEP_TIME = 0.5
 
 # Should we always do fast ARP scanning?
-ALWAYS_FAST_SCAN = True
+ALWAYS_FAST_SCAN = False
 
 
 class ArpScan(object):

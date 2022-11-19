@@ -7,6 +7,7 @@ import time
 import ctypes
 import scapy.all as sc
 import host_system
+from naming import ConstantsNamespace
 #import server_config
 
 
@@ -18,10 +19,11 @@ def main():
         sys.exit(1)
 
     if not host_system.is_npcap_installed():
+        constants = ConstantsNamespace()
         sys.stderr.write("IoT Intrusion detector no puede funcionar"
                          + "sin Npcap.\n")
         sys.stderr.write("Por favor, visita para instalarlo "
-                         + naming.NPCAP_DOWNLOAD_URL)
+                         + constants.NPCAP_DOWNLOAD_URL)
         sys.exit(1)
 
     # chequeo de interfaces de red conectadas
@@ -69,7 +71,7 @@ def main():
         print('Limpiando ({})...'.format(10 - t))
         time.sleep(1)
 
-    inspector.disable_ip_forwarding()
+    detector.disable_ip_forwarding()
 
     utils.log('[Main] Quit.')
 

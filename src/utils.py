@@ -4,7 +4,6 @@ Misc functions.
 """
 # import server_config
 import os
-import requests
 import scapy.all as sc
 import time
 import threading
@@ -13,7 +12,6 @@ import datetime
 import sys
 import re
 import json
-import uuid
 import hashlib
 import netaddr
 import netifaces
@@ -120,17 +118,59 @@ def _get_routes():
 
 def get_default_route():
     """Returns (gateway_ip, iface, host_ip)."""
+    # Discover the active/preferred network interface 
+    # by connecting to Google's public DNS server
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(2)
+            s.connect(("8.8.8.8", 80))
+            iface_ip = s.getsockname()[0]
+    except socket.error:
+        sys.stderr.write('IoT Inspector cannot run without network connectivity.\n')
+        sys.exit(1)
 
     while True:
-
         routes = _get_routes()
-        # Look for network = 0.0.0.0, netmask = 0.0.0.0
-        for default_route in routes:
-            if default_route[0] == 0 and default_route[1] == 0:
-                return default_route[2:5]
+        default_route = None
+        for route in routes:
+            if route[4] == iface_ip:
+                # Reassign scapy's default interface to the one we selected
+                sc.conf.iface = route[3]
+                default_route = route[2:5]
+                break
+        if default_route:
+            break
 
         log('get_default_route: retrying')
-        time.sleep(1)
+        time.sleep(1)  
+
+    # If we are using windows, conf.route.routes table doesn't update.
+    # We have to update routing table manually for packets
+    # to pick the correct route. 
+    if sys.platform.startswith('win'):
+        for i, route in enumerate(routes):
+            # if we see our selected iface, update the metrics to 0
+            if route[3] == default_route[1]:
+                routes[i] = (*route[:-1], 0)
+
+    return default_route
+
+
+def get_net_and_mask():
+    iface = get_default_route()[1]
+    routes = _get_routes()
+    net = mask = None
+    for route in routes:
+        if route[3] == iface:
+            net = ipaddress.IPv4Address(route[0])
+            mask = ipaddress.IPv4Address(route[1])
+            break
+    return net, mask
+
+
+def check_pkt_in_network(ip, net, mask):
+    full_net = ipaddress.ip_network(f"{ip}/{mask}", strict=False)
+    return full_net.network_address == net
 
 
 def get_network_ip_range_windows():
@@ -388,3 +428,12 @@ def jsonify_dict(input_dict):
         output_dict[k] = v
 
     return json.dumps(output_dict)
+
+
+def test():
+    # check_ethernet_network()
+    print(get_default_route())
+
+
+if __name__ == '__main__':
+    test()

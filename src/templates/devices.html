@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Show Devices</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    
+    <header>
+        <h1>Detector de intrusiones IoT</h1>
+    </header>
+    <nav>
+        <a href="/shutdown">Apagar</a> |
+        <a href="/css/">CSS</a> 
+    </nav> 
+    <article>
+<h2>Instructions for Weijia:</h2>
+<ol>
+    <li>When you are able to experiment with a particular device, click the "Block Inspection" link for that device (even if the device is currently not being inspected.) This will prevent others from inspecting the device.</li>
+    <li>When you are done with the experiment with that particular device, click the "Allow Inspection" link for that device.</li>
+</ol>
+</article>
+<hr />
+<h3>Devices under inspection</h3>
+<ul>
+   
+</ul>
+<hr />
+<h3>Devices not under inspection</h3>
+<ul>
+{% for device in devicesToShow.values() %}
+
+
+<li> {{device['vendor']}} {{device['device_name']}} a </li>
+{% endfor %}
+</ul>
+    <footer>
+        <p>Detector de intrusiones IoT v. {{ version }}</p>
+        <p><a href="mailto:sradio@uoc.edu" title="Autor: Santiago Radío Abal">sradio@uoc.edu</a></p>
+    </footer> 
+</body>
+</html>

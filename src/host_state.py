@@ -2,27 +2,34 @@
 Global shared state about the host.
 
 """
+from naming import ConstantsNamespace
 import threading
 import utils
 import time
 import sys
 
 
-CLIENT_VERSION = '0.0.1'
-
-
 class HostState(object):
+    """Objeto compartido por todos los procesos.
+
+    Args:
+        object (_type_): _description_
+    """
 
     def __init__(self):
 
         self.host_ip = None
         self.host_mac = None
         self.gateway_ip = None
+        self.net = None
+        self.mask = None
         self.packet_processor = None
         self.user_key = None
         self.secret_salt = None
-        self.client_version = CLIENT_VERSION
+        self.client_version = ConstantsNamespace().VERSION
         self.persistent_mode = True  # Always persistent to remove local Flask
+        self.raspberry_pi_mode = False  # If true, app does not auto-quit upon UI inactivity
+
 
         # The following objects might be modified concurrently.
         self.lock = threading.Lock()
@@ -37,7 +44,7 @@ class HostState(object):
         self.pending_syn_scan_dict = {}  # device_id -> port_list
         self.status_text = None
         self.device_whitelist = []
-        self.has_consent = True
+        self.has_consent = False
         self.byte_count = 0
         self.is_inspecting_traffic = True
         self.fast_arp_scan = True  # Persists for first 5 mins

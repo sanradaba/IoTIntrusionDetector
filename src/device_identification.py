@@ -3,8 +3,8 @@ Implements the device-identification algorithm
 
 """
 MAC_TO_NAME_MAPPING = {
-    '00166cc2382d': ('Samsung', 'Samsung Camera'),
-    '001788727b50': ('Philips', 'Philips Light Bulb'),
+    '10bef5032d6a': ('D-Link', 'NAS'),
+    '78bdbcf04cad': ('Philips', 'Philips Light Bulb'),
     '2caa8e9a64b7': ('Wyze', 'Wyze Camera'),
     '4cefc00b91b3': ('Amazon', 'Amazon Echo'),
     '18b4308a9fb2': ('Nest', 'Nest Camera'),
@@ -31,7 +31,6 @@ def get_device_name(mac_address):
         return MAC_TO_NAME_MAPPING[mac_address][1]
     except KeyError:
         return ''
-
 
 
 def get_device_vendor(mac_address):

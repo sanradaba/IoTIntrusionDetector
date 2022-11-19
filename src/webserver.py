@@ -1,4 +1,4 @@
-from flask import Flask, g
+from flask import Flask, g, render_template
 import threading
 
 import flask
@@ -7,40 +7,23 @@ import time
 import json
 import host_blocklist
 import device_identification
+from naming import ConstantsNamespace
 
 
-PORT = 46241
+
 
 GLOBAL_CONTEXT = {'host_state': None}
 
 OK_JSON = json.dumps({'status': 'OK'})
 
 app = Flask(__name__)
+# app.debug = True
 
 
-SHOW_DEVICE_TEMPLATE = """
-<html><head><title>Show Devices</title></head>
-<body>
-<h1>Debug Interface for Weijia to Take Devices Out of Inspection</h1>
-Instructions for Weijia:
-<ol>
-    <li>When you are able to experiment with a particular device, click the "Block Inspection" link for that device (even if the device is currently not being inspected.) This will prevent others from inspecting the device.</li>
-    <li>When you are done with the experiment with that particular device, click the "Allow Inspection" link for that device.</li>
-</ol>
-<hr />
-<h3>Devices under inspection</h3>
-<ul>
-{inspected_text}
-</ul>
-<hr />
-<h3>Devices not under inspection</h3>
-<ul>
-{not_inspected_text}
-</ul>
-</body>
-</html>
-
-"""
+app.config.update(
+    TEMPLATES_AUTO_RELOAD=True,
+    EXPLAIN_TEMPLATE_LOADING=True
+)
 
 
 def start_thread(host_state):
@@ -54,7 +37,8 @@ def start_thread(host_state):
 
 def _monitor_web_server():
 
-    utils.restart_upon_crash(app.run, kwargs={'port': PORT})
+    utils.restart_upon_crash(app.run,
+                             kwargs={'port': ConstantsNamespace().PORT})
 
 
 def get_host_state():
@@ -74,14 +58,17 @@ def log_http_request(request_name):
             host_state.last_ui_contact_ts = time.time()
 
 
-@app.route('/weijia_control_devices', methods=['GET'])
+@app.route('/', methods=['GET'])
 def show_devices():
 
     inspected_text = ''
     not_inspected_text = ''
 
     black_list = get_weijia_black_list()
-
+    devices = get_device_list_helper()
+    devicesToShow = dict(filter(lambda val: val not in black_list,
+                                devices.items()))
+    """
     for device_dict in get_device_list_helper().values():
 
         name = device_dict['device_name']
@@ -94,14 +81,19 @@ def show_devices():
         if device_id in black_list:
             black_list_status = '<i>(Currently blocked by Weijia)</i>'
 
+        # inpectedItems = []
+        # inpectedItems.append
         item = f'<li>{vendor} {name} {black_list_status} <small>[<a href="/weijia_enable_inspection/{device_id}">Allow Inspection</a> | <a href="/weijia_disable_inspection/{device_id}">Block Inspection</a>]</small></li>\n'
 
         if device_dict['is_inspected']:
             inspected_text += item
         else:
             not_inspected_text += item
-
-    return SHOW_DEVICE_TEMPLATE.format(inspected_text=inspected_text, not_inspected_text=not_inspected_text)
+"""
+    return render_template('devices.html',
+                           devicesToShow=devicesToShow,
+                           version=ConstantsNamespace().VERSION)
+    # return SHOW_DEVICE_TEMPLATE.format(inspected_text=inspected_text, not_inspected_text=not_inspected_text)
 
 
 def get_weijia_black_list():

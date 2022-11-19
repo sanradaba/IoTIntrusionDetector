@@ -2,9 +2,10 @@ import tldextract
 
 blocked_domains = set()
 
+
 def parse_blocklist():
 
-    with open('src\hosts-blocklists.txt') as fp:
+    with open('src/hosts-blocklists.txt') as fp:
         for line in fp:
             if '::' in line:
                 domain = line.split('/')[1].lower().strip()

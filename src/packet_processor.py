@@ -86,7 +86,18 @@ class PacketProcessor(object):
 
         """
         try:
-            if pkt.op == 2 and pkt.hwsrc != self._host_state.host_mac:
+            # Similar to the ARP protocol
+            # Allow both ARP requests and replies to update mapping.
+            # See https://www.rfc-editor.org/rfc/rfc5227#page-4 for 0.0.0.0 being used in ARP Probes
+            # to avoid polluting ARP caches in other hosts on the same link in the case where the
+            # address turns out to be already in use by another host.
+            # An ARP Probe conveys both a question ("Is anyone using this address?") and an
+            # implied statement ("This is the address I hope to use.").
+            if ((pkt.op == 1 or pkt.op == 2) and
+                pkt.hwsrc != self._host_state.host_mac and
+                pkt.psrc != "0.0.0.0" and
+                utils.check_pkt_in_network(pkt.psrc, self._host_state.net,
+                                           self._host_state.mask)):
                 self._host_state.set_ip_mac_mapping(pkt.psrc, pkt.hwsrc)
 
         except AttributeError:
