@@ -12,6 +12,7 @@ from arp_spoof import ArpSpoof
 # from data_upload import DataUploader
 from netdisco_wrapper import NetdiscoWrapper
 from naming import ConstantsNamespace
+from device_identification import DeviceRegistry
 import subprocess
 import sys
 import logging
@@ -40,6 +41,9 @@ def start():
     state.gateway_ip, _, state.host_ip = utils.get_default_route()
     state.net, state.mask = utils.get_net_and_mask()
 
+    deviceRegistry = DeviceRegistry()
+    deviceRegistry.loadFromCsv("src/oui.csv")
+
     assert utils.is_ipv4_addr(state.gateway_ip)
     assert utils.is_ipv4_addr(state.host_ip)
 
@@ -48,7 +52,7 @@ def start():
     utils.log('Initialized:', state.__dict__)
 
     # Start web API
-    webserver.start_thread(state)
+    webserver.start_thread(state, deviceRegistry)
 
     # Continously discover devices
     arp_scan_thread = ArpScan(state)

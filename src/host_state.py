@@ -30,7 +30,6 @@ class HostState(object):
         self.persistent_mode = True  # Always persistent to remove local Flask
         self.raspberry_pi_mode = False  # If true, app does not auto-quit upon UI inactivity
 
-
         # The following objects might be modified concurrently.
         self.lock = threading.Lock()
         self.ip_mac_dict = {}  # IP -> MAC

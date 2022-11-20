@@ -10,9 +10,7 @@ import device_identification
 from naming import ConstantsNamespace
 
 
-
-
-GLOBAL_CONTEXT = {'host_state': None}
+GLOBAL_CONTEXT = {'host_state': None, 'device_registry': None}
 
 OK_JSON = json.dumps({'status': 'OK'})
 
@@ -26,10 +24,10 @@ app.config.update(
 )
 
 
-def start_thread(host_state):
+def start_thread(host_state, device_registry):
 
     GLOBAL_CONTEXT['host_state'] = host_state
-
+    GLOBAL_CONTEXT['device_registry'] = device_registry  
     th = threading.Thread(target=_monitor_web_server)
     th.daemon = True
     th.start()
@@ -111,7 +109,7 @@ def set_weijia_black_list(black_list):
         json.dump(black_list, fp)
 
 
-@app.route('/weijia_enable_inspection/<device_id>', methods=['GET'])
+@app.route('/w_enable_inspection/<device_id>', methods=['GET'])
 def weijia_enable_inspection(device_id):
 
     black_list = get_weijia_black_list()
@@ -121,10 +119,10 @@ def weijia_enable_inspection(device_id):
 
     enable_inspection(device_id)
 
-    return flask.redirect('/weijia_control_devices')
+    return flask.redirect('/')
 
 
-@app.route('/weijia_disable_inspection/<device_id>', methods=['GET'])
+@app.route('/w_disable_inspection/<device_id>', methods=['GET'])
 def weijia_disable_inspection(device_id):
 
     black_list = get_weijia_black_list()
@@ -134,7 +132,7 @@ def weijia_disable_inspection(device_id):
 
     disable_inspection(device_id)
 
-    return flask.redirect('/weijia_control_devices')
+    return flask.redirect('/')
 
 
 @app.route('/get_device_list', methods=['GET'])
@@ -169,9 +167,10 @@ def get_device_list_helper():
                 device_id,
                 {
                     'device_id': device_id,
+                    'device_mac': mac,
                     'device_ip': ip,
                     'device_name': device_identification.get_device_name(mac),
-                    'device_vendor': device_identification.get_device_vendor(mac),
+                    'device_vendor': GLOBAL_CONTEXT['device_registry'].get_device_vendor(mac),
                     'netdisco_name': '',
                     'dhcp_name': '',
                     'is_inspected': device_id in host_state.device_whitelist
