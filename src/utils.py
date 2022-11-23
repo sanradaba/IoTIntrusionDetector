@@ -12,6 +12,7 @@ import datetime
 import sys
 import re
 import json
+import uuid
 import hashlib
 import netaddr
 import netifaces
@@ -26,8 +27,8 @@ sc.conf.verb = 0
 # If non empty, then only devices with the following MAC addresses with be
 # inspected. Do not populate this list in production. For internal testing.
 TEST_OUI_LIST = [
-    # 'd83134',  # Roku
-    # '74f61c',  # Danny's Pixel phone
+    # 'd83134',  
+    # '74f61c',  
 ]
 
 DEFAULT_HOME_DIR_NAME = 'iot-intrusion-detector'
@@ -59,13 +60,13 @@ def get_user_config():
     except Exception:
         pass
 
+    secret_salt = str(uuid.uuid4())
     # actualizar configuración
     with open(user_config_file, 'w') as fp:
         config_dict = {
-           # 'user_key': user_key,
-           # 'secret_salt': secret_salt
+            'secret_salt': secret_salt
         }
-    #    json.dump(config_dict, fp)
+        json.dump(config_dict, fp)
 
     return config_dict
 

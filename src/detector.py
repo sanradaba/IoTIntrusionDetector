@@ -36,7 +36,7 @@ def start():
     # Set up environment
     state = HostState()
     # state.user_key = config_dict['user_key'].replace('-', '')
-    # state.secret_salt = config_dict['secret_salt']
+    state.secret_salt = config_dict['secret_salt']
     state.host_mac = utils.get_my_mac()
     state.gateway_ip, _, state.host_ip = utils.get_default_route()
     state.net, state.mask = utils.get_net_and_mask()

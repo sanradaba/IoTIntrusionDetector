@@ -269,6 +269,16 @@ def get_domain_name(host_state, query_device_id, query_ip_address):
     return ret_domain
 
 
+@app.route('/w_disable_all_monitor', methods=['GET'])
+def w_disable_all_inspection():
+
+    host_state = get_host_state()
+    if host_state is not None:
+        with host_state.lock:
+            host_state.device_whitelist = []
+
+    return flask.redirect('/')
+
 
 @app.route('/is_ready', methods=['GET'])
 def is_ready():
@@ -303,7 +313,7 @@ def disable_inspection(device_id):
     return OK_JSON
 
 
-@app.route('/disable_all_inspection', methods=['GET'])
+@app.route('/disable_all_monitor', methods=['GET'])
 def disable_all_inspection():
 
     host_state = get_host_state()

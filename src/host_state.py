@@ -24,7 +24,6 @@ class HostState(object):
         self.net = None
         self.mask = None
         self.packet_processor = None
-        self.user_key = None
         self.secret_salt = None
         self.client_version = ConstantsNamespace().VERSION
         self.persistent_mode = True  # Always persistent to remove local Flask
