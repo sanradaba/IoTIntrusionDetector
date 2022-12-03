@@ -127,7 +127,8 @@ def get_default_route():
             s.connect(("8.8.8.8", 80))
             iface_ip = s.getsockname()[0]
     except socket.error:
-        sys.stderr.write('IoT Inspector cannot run without network connectivity.\n')
+        sys.stderr.write('Detector de intrusiones IoT no puede funcionar'
+                         + 'sin conectividad de red.\n')
         sys.exit(1)
 
     while True:

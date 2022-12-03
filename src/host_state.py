@@ -42,7 +42,7 @@ class HostState(object):
         self.pending_syn_scan_dict = {}  # device_id -> port_list
         self.status_text = None
         self.device_whitelist = []
-        self.has_consent = False
+        self.has_consent = True
         self.byte_count = 0
         self.is_inspecting_traffic = True
         self.fast_arp_scan = True  # Persists for first 5 mins
@@ -53,6 +53,7 @@ class HostState(object):
         self.block_device_dict = {}
         # Timestamp when /get_traffic was called
         self.last_get_traffic_ts = time.time()
+        self.detected_attacks_dict = {}  # device_id -> time
 
         # Constantly checks for IP changes on this host
         thread = threading.Thread(target=self.update_ip_thread)

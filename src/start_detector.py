@@ -1,14 +1,15 @@
-import os
-import detector
-import sys
-import utils
-import signal
-import time
 import ctypes
+import os
+import signal
+import sys
+import time
+
 import scapy.all as sc
+
+import detector
 import host_system
+import utils
 from naming import ConstantsNamespace
-#import server_config
 
 
 def main():
@@ -37,8 +38,6 @@ def main():
                          + "a la red cableada e inalámbrica simultáneamente.")
         sys.exit(1)
 
-
-
     utils.log('[Main] Finalizando procesos anteriores.')
     if not kill_existing_inspector():
         utils.log('[Main] No se han podido finalizar los procesos.')
@@ -47,8 +46,8 @@ def main():
     utils.log('[Main] Arrancando detector')
     detector.enable_ip_forwarding()
 
-    # We don't wrap the function below in safe_run because, well, if it crashes,
-    # it crashes.
+    # We don't wrap the function below in safe_run because, well, 
+    # if it crashes, it crashes.
     host_state = detector.start()
 
     # Waiting for termination

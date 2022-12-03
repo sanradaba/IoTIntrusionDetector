@@ -151,7 +151,8 @@ class PacketProcessor(object):
                 device_id = utils.get_device_id(device_mac, self._host_state)
 
                 self._host_state.pending_dhcp_dict[device_id] = device_hostname
-                utils.log('[UPLOAD] DHCP Hostname:', device_hostname)
+                utils.log('[UPLOAD] DHCP Hostname: {} ({})'
+                          .format(device_hostname, device_id))
 
             if resolver_ip:
 
@@ -290,8 +291,8 @@ class PacketProcessor(object):
 
         # Get remote device_id for internal book-keeping purpose
         remote_device_id = ''
-        remote_ip_is_inspector_host = 0 # True (1) or False (0)
-        remote_ip_is_gateway = 0 # True (1) or False (0)
+        remote_ip_is_inspector_host = 0  # True (1) or False (0)
+        remote_ip_is_gateway = 0  # True (1) or False (0)
         try:
             with self._host_state.lock:
                 real_remote_device_mac = self._host_state.ip_mac_dict[remote_ip]

@@ -17,26 +17,59 @@
         <header>
             <h1>Detector de intrusiones IoT</h1>
         </header>
-        <nav class="navbar navbar-expand-lg" style="height: 10;">
-            <a href="/shutdown"><span class="glyphicon glyphicon-off"></span> Apagar</a>
-            <a href="/"><span class="glyphicon glyphicon-refresh"></span> Refrescar</a> 
-            <a href="/w_disable_all_monitor"><span class="glyphicon glyphicon-stop"> Desactivar monitorizaciones</span></a>
-            <a href="/get_traffic"><span class="glyphicon glyphicon-download-alt"></span> Descargar tráfico</a>
+        <nav class="navbar navbar-expand-lg" >
+            <a href="/shutdown"> <span class="glyphicon glyphicon-off"></span> Apagar </a>
+            <a href="/"> <span class="glyphicon glyphicon-refresh"></span> Refrescar </a> 
+            <a href="/w_disable_all_monitor"> <span class="glyphicon glyphicon-stop"></span> Desactivar monitorizaciones </a>
+            <a href="/get_traffic"> <span class="glyphicon glyphicon-download-alt"></span> Descargar tráfico</a>
         </nav> 
 
-        <div  class="container text-center" style="height: 355px;  overflow-y: auto">
+        <div  class="container text-center" style="height: 375px;  overflow-y: auto">
             <div class="row ">
                 <div class="col-lg-3"><h4>Dispositivo</h4></div>
                 <div class="col-lg-3"><h4>Características</h4></div>
                 <div class="col-lg-3"><h4>Estado</h4></div>
                 <div class="col-lg-3"><h4>Acciones</h4></div>
             </div>
-            {% for device in devicesToShow.values() %}
-            <div class="row">
-                <div class="col-lg-3"><p>{{device['device_id']}}</p> {{device['device_vendor']}} {{device['device_name']}}</div>
-                <div class="col-lg-3"><p>{{device['device_ip']}}</p> <p>{{device['device_mac']}}</p></div>
-                <div class="col-lg-3"><p>{% if device['is_inspected'] %} <span class="glyphicon glyphicon-check"></span> Monitorizado{% else%} <span class="glyphicon glyphicon-signal"></span> Detectado{% endif %}</div>
-                <div class="col-lg-3">{% if device['is_inspected'] %} <a href="/w_disable_inspection/{{device['device_id']}}"><span class="glyphicon glyphicon-stop"></span> Parar monitorizacion</a> {% else %} <a href="/w_enable_inspection/{{device['device_id']}}"><span class="glyphicon glyphicon-record"> Monitorizar</span></a>
+            
+            {% for device in devicesToShow.values(): %}
+            <div id="editName{{device['device_id']}}" class="modalWindow">
+                <div>
+                    <h3>Cambiar nombre</h3>
+                    <form action="/rename" method="post">
+                        <div class="input-group">
+                            <label for="id{{device['device_id']}}" class="input-group-addon"> ID:</label>
+                            <input id="id{{device['device_id']}}" class="form-control" name="id" value="{{device['device_id']}}" readonly/>
+                        </div>
+                        {% if device['dhcp_name'] is defined and device['dhcp_name']|length %}
+                        <div class="input-group">
+                        <label for="dhcp{{device['device_id']}}" class="input-group-addon">DHCP: </label> 
+                        <input id="dhcp{{device['device_id']}}" class="form-control" name="dhcp_name" type="text" value="{{device['dhcp_name']}}" disabled />
+                        </div>
+                        {% endif %}
+                        <div class="input-group">     
+                        <label for="name{{device['device_id']}}" class="input-group-addon"> Nombre: </label>
+                        <input id="name{{device['device_id']}}" class="form-control" name="name" type="text" value="{{device['device_name']}}" required title="Nuevo nombre para el dispositivo"/>
+                        </div>
+                        <span class="input-group-btn">
+                        <input class="btn btn-default" type="submit" value="Renombrar"/>
+                        </span>
+                    </form>
+                    <a href="#cancel" title="Cancelar" class="ok">Cancelar</a>
+                </div>
+            </div>
+            <div class="row  ">
+                <div class="col-lg-3 border-top"><dl><dt>ID: {{device['device_id']}}</dt> 
+                    <dd></a> Nombre: {{device['device_name']}} {% if device['dhcp_name'] is defined and device['dhcp_name']|length %} ({{device['dhcp_name']}}) {% endif %}<a href="#editName{{device['device_id']}}"><span class="glyphicon glyphicon-edit"></span></a></dd> 
+                    <dd>Fabricante: {{device['device_vendor']}}</dd></div>
+                <div class="col-lg-3 border-top"><dl><dt>IP: {{device['device_ip']}}</dt> <dd>MAC: {{device['device_mac']}}</dd><dd>{{device['netdisco_name']}}</dd></dl></div>
+                <div class="col-lg-3 border-top">
+                    {% if device['is_inspected'] %}<p><span class="glyphicon glyphicon-eye-open"></span> Monitorizado</p>{% else%}<p><span class="glyphicon glyphicon-signal"></span> Conectado</p> {% endif %} 
+                    {% if device['has_been_attacked'] %}<p><a href="#"><span class="glyphicon glyphicon-warning-sign"></span> Ataque detectado</a></p> {% endif %}
+                </div>
+                <div class="col-lg-3 border-top">
+                    {% if device['is_inspected'] %}<a href="/w_disable_inspection/{{device['device_id']}}"><span class="glyphicon glyphicon-stop"></span> Parar monitorización</a> 
+                    {% else %} <a href="/w_enable_inspection/{{device['device_id']}}"><span class="glyphicon glyphicon-record"> Monitorizar</span></a>
                     {% endif %}</div>
             </div>
             {% endfor %}

@@ -9,7 +9,7 @@ from arp_scan import ArpScan
 from syn_scan import SynScan
 from packet_capture import PacketCapture
 from arp_spoof import ArpSpoof
-# from data_upload import DataUploader
+from traffic_analyzer import TrafficAnalyzer
 from netdisco_wrapper import NetdiscoWrapper
 from naming import ConstantsNamespace
 from device_identification import DeviceRegistry
@@ -18,6 +18,23 @@ import sys
 import logging
 # import server_config
 import webserver
+
+WINDOWS_STARTUP_TEXT = """
+
+======================================
+Detector de intrusiones IoT
+======================================
+
+Corriendo en la interfaz: {0}
+IP: {1}
+
+Puedes visualizar la intefaz de usuario en la url http://{1}:{2}
+
+Para apagarlo simplemente cierre la ventana o pulse ctrl + C
+
+Autor: Santiago Radío Abal <sradio@uoc.edu>
+
+"""
 
 
 def start():
@@ -32,6 +49,9 @@ def start():
     config_dict = utils.get_user_config()
 
     utils.log('[MAIN] Starting.')
+    gateway_ip, iface, host_ip = utils.get_default_route()
+    utils.log('Running Inspector on IP Address: {}\n \
+    Running Inspector on Network Interface: {}'.format(host_ip, iface))
 
     # Set up environment
     state = HostState()
@@ -75,6 +95,10 @@ def start():
         arp_spoof_thread = ArpSpoof(state)
         arp_spoof_thread.start()
 
+    # Continuously upload data
+    traffic_analyzer = TrafficAnalyzer(state)
+    traffic_analyzer.start()
+
     # Suppress scapy warnings
     try:
         logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
@@ -87,8 +111,8 @@ def start():
     except Exception:
         pass
 
-    console_message = "Ready. To test if the API works, visit http://127.0.0.1:{:}/get_device_list"
-    print(console_message.format(ConstantsNamespace().PORT))
+    print(WINDOWS_STARTUP_TEXT.format(iface, "127.0.0.1", 
+                                      ConstantsNamespace().PORT))
 
     return state
 

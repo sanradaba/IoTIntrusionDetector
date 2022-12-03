@@ -1,0 +1,8 @@
+requests
+scapy
+netaddr
+netdisco
+netifaces
+flask
+scikit-learn
+pandas

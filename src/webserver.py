@@ -1,4 +1,4 @@
-from flask import Flask, g, render_template
+from flask import Flask, g, render_template, request
 import threading
 
 import flask
@@ -169,11 +169,12 @@ def get_device_list_helper():
                     'device_id': device_id,
                     'device_mac': mac,
                     'device_ip': ip,
-                    'device_name': device_identification.get_device_name(mac),
+                    'device_name': GLOBAL_CONTEXT['device_registry'].get_device_name(device_id),
                     'device_vendor': GLOBAL_CONTEXT['device_registry'].get_device_vendor(mac),
                     'netdisco_name': '',
                     'dhcp_name': '',
-                    'is_inspected': device_id in host_state.device_whitelist
+                    'is_inspected': device_id in host_state.device_whitelist,
+                    'has_been_attacked': device_id in host_state.detected_attacks_dict
                 }
             )
 
@@ -182,9 +183,14 @@ def get_device_list_helper():
     with host_state.lock:
         for (device_id, device_info_list) in host_state.pending_netdisco_dict.items():
             if device_id in output_dict:
-                output_dict[device_id]['netdisco_name'] = device_info_list
-
-        # Reset pending dict
+                for device_info in device_info_list:
+                    if 'name' in device_info:
+                        output_dict[device_id]['netdisco_name'] = device_info['name']
+                        break
+                    if 'device_type' in device_info:
+                        output_dict[device_id]['netdisco_name'] = device_info['device_type']
+                        break
+        # Eliminar información netdisco tras mostrarla 
         host_state.pending_netdisco_dict = {}
 
     # Fill out dhcp_name
@@ -195,7 +201,7 @@ def get_device_list_helper():
                 output_dict[device_id]['dhcp_name'] = dhcp_name
 
         # Reset pending dict
-        host_state.pending_dhcp_dict = {}
+        # host_state.pending_dhcp_dict = {}
 
     return output_dict
 
@@ -248,9 +254,9 @@ def get_traffic():
                     'outbound_bytes_per_second': outbound_bps
                 }
 
-        # Reset pending
-        host_state.pending_flow_dict = {}
-        host_state.last_get_traffic_ts = current_ts
+        # Resetear trafico descargado
+        # host_state.pending_flow_dict = {}
+        # host_state.last_get_traffic_ts = current_ts
 
     return json.dumps(output_dict, indent=2)
 
@@ -374,3 +380,11 @@ def list_blocked_devices():
             blocked_device_list = list(host_state.block_device_dict.keys())
 
     return json.dumps(blocked_device_list)
+
+
+@app.route('/rename', methods=['POST'])
+def rename_device():
+    name = request.form['name']
+    id = request.form['id']
+    GLOBAL_CONTEXT['device_registry'].set_device_name(id, name)
+    return flask.redirect('/')
