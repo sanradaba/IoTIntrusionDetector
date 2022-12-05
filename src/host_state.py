@@ -53,6 +53,7 @@ class HostState(object):
         self.block_device_dict = {}
         # Timestamp when /get_traffic was called
         self.last_get_traffic_ts = time.time()
+        self.flow_features_dict = {}  # device -> traffic features
         self.detected_attacks_dict = {}  # device_id -> time
 
         # Constantly checks for IP changes on this host

@@ -10,6 +10,7 @@ import hashlib
 import time
 import re
 from syn_scan import SYN_SCAN_SEQ_NUM, SYN_SCAN_SOURCE_PORT
+from scapy.layers.inet import TCP
 
 
 # pylint: disable=no-member
@@ -76,6 +77,8 @@ class PacketProcessor(object):
             protocol = 'udp'
         else:
             return
+
+        self._process_CICFlowMeter(pkt, protocol)
 
         return self._process_tcp_udp_flow(pkt, protocol)
 
@@ -233,6 +236,79 @@ class PacketProcessor(object):
             ip_set = ip_set | current_ip_set
             self._host_state.pending_dns_dict[dns_key] = ip_set
 
+    def _process_CICFlowMeter(self, pkt, protocol):
+        """Permite extraer las caracteristicas necesarias para
+        realizar las estadísticas de flujo
+
+        Args:
+            pkt (Packet): Packet class de scapy.packet
+            protocol (str): udp ó tcp. En otro caso no se procesará
+        """
+        if protocol == 'tcp':
+            layer = sc.TCP
+        elif protocol == 'udp':
+            layer = sc.UDP
+        else:
+            return
+        # Parse packet
+        src_mac = pkt[sc.Ether].src
+        dst_mac = pkt[sc.Ether].dst
+        src_ip = pkt[sc.IP].src
+        dst_ip = pkt[sc.IP].dst
+        src_port = pkt[layer].sport
+        dst_port = pkt[layer].dport
+        time_stamp = time.time()
+
+        # No broadcast
+        if dst_mac == 'ff:ff:ff:ff:ff:ff' or dst_ip == '255.255.255.255':
+            return
+
+        # Only look at flows where this host pretends to be the gateway
+        host_mac = self._host_state.host_mac
+
+        payload_bytes = len(bytes(pkt[layer].payload))
+
+        # Determine flow direction
+        if src_mac == host_mac:
+            direction = 'inbound'
+            device_mac = dst_mac
+            device_port = dst_port
+            remote_ip = src_ip
+            remote_port = src_port
+        elif dst_mac == host_mac:
+            direction = 'outbound'
+            device_mac = src_mac
+            device_port = src_port
+            remote_ip = dst_ip
+            remote_port = dst_port
+        else:
+            return
+
+        device_id = utils.get_device_id(device_mac, self._host_state)
+
+        flag_ack = False
+        if layer == sc.TCP:
+            if pkt[layer].flags.A:
+                flag_ack = True
+
+        flow_key = (
+             src_ip, src_port, dst_ip, dst_port, protocol
+        )
+        flow_id = '-'.join([str(item) for item in flow_key])
+        packet_features = {"flow_id": flow_id,
+                           "src_ip": src_ip, "src_port": src_port,
+                           "dst_ip": dst_ip, "dst_port": dst_port,
+                           "direction": direction, "protocol": protocol,
+                           "time_stamp": time_stamp,
+                           "payload_bytes": payload_bytes,
+                           "flag_ack": flag_ack}
+
+        with self._host_state.lock:
+            flow_features_dict = self._host_state.flow_features_dict
+            if device_id not in flow_features_dict:
+                flow_features_dict[device_id] = []
+            flow_features_dict[device_id].append(packet_features)
+
     def _process_tcp_udp_flow(self, pkt, protocol):
 
         if protocol == 'tcp':
@@ -261,6 +337,7 @@ class PacketProcessor(object):
         # later
         tcp_seq = None
         tcp_ack = None
+        tcp_syn = None
 
         try:
             tcp_layer = pkt[sc.TCP]
