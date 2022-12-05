@@ -11,7 +11,8 @@ import time
 import re
 from syn_scan import SYN_SCAN_SEQ_NUM, SYN_SCAN_SOURCE_PORT
 from scapy.layers.inet import TCP
-
+from cicflowmeter.flow import Flow
+from cicflowmeter.features.context.packet_direction import PacketDirection
 
 # pylint: disable=no-member
 
@@ -237,8 +238,8 @@ class PacketProcessor(object):
             self._host_state.pending_dns_dict[dns_key] = ip_set
 
     def _process_CICFlowMeter(self, pkt, protocol):
-        """Permite extraer las caracteristicas necesarias para
-        realizar las estadísticas de flujo
+        """Permite extraer las caracteristicas necesarias
+        para realizar las estadísticas de flujo
 
         Args:
             pkt (Packet): Packet class de scapy.packet
@@ -270,13 +271,13 @@ class PacketProcessor(object):
 
         # Determine flow direction
         if src_mac == host_mac:
-            direction = 'inbound'
+            direction = PacketDirection.FORWARD
             device_mac = dst_mac
             device_port = dst_port
             remote_ip = src_ip
             remote_port = src_port
         elif dst_mac == host_mac:
-            direction = 'outbound'
+            direction = PacketDirection.REVERSE
             device_mac = src_mac
             device_port = src_port
             remote_ip = dst_ip
@@ -286,28 +287,28 @@ class PacketProcessor(object):
 
         device_id = utils.get_device_id(device_mac, self._host_state)
 
-        flag_ack = False
-        if layer == sc.TCP:
-            if pkt[layer].flags.A:
-                flag_ack = True
-
         flow_key = (
              src_ip, src_port, dst_ip, dst_port, protocol
         )
         flow_id = '-'.join([str(item) for item in flow_key])
-        packet_features = {"flow_id": flow_id,
-                           "src_ip": src_ip, "src_port": src_port,
-                           "dst_ip": dst_ip, "dst_port": dst_port,
-                           "direction": direction, "protocol": protocol,
-                           "time_stamp": time_stamp,
-                           "payload_bytes": payload_bytes,
-                           "flag_ack": flag_ack}
 
-        with self._host_state.lock:
-            flow_features_dict = self._host_state.flow_features_dict
-            if device_id not in flow_features_dict:
-                flow_features_dict[device_id] = []
-            flow_features_dict[device_id].append(packet_features)
+        if device_id in self._host_state.device_whitelist:
+            with self._host_state.lock:
+                flow_features_dict = self._host_state.flow_features_dict
+                if device_id not in flow_features_dict:
+                    flow = Flow(pkt, direction)
+                    flow.add_packet(pkt, direction)
+                    flow_features_dict[device_id] = {flow_id: flow}
+                else:
+                    if flow_id in flow_features_dict[device_id]:
+                        flow_features_dict[device_id][flow_id].add_packet(pkt, direction)
+                    else:
+                        flow = Flow(pkt, direction)
+                        flow.add_packet(pkt, direction)
+                        flow_features_dict[device_id][flow_id] = flow
+
+            return device_id
+        return None
 
     def _process_tcp_udp_flow(self, pkt, protocol):
 
