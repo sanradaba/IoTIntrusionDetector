@@ -2,17 +2,20 @@
 Processes individual packets.
 
 """
-from host_state import HostState
+import hashlib
+import re
+import time
+
 import scapy.all as sc
 import scapy.layers.http as http
-import utils
-import hashlib
-import time
-import re
-from syn_scan import SYN_SCAN_SEQ_NUM, SYN_SCAN_SOURCE_PORT
 from scapy.layers.inet import TCP
-from cicflowmeter.flow import Flow
+
+import utils
 from cicflowmeter.features.context.packet_direction import PacketDirection
+from cicflowmeter.features.context.packet_flow_key import get_packet_flow_key
+from cicflowmeter.flow import Flow
+from host_state import HostState
+from syn_scan import SYN_SCAN_SEQ_NUM, SYN_SCAN_SOURCE_PORT
 
 # pylint: disable=no-member
 
@@ -286,11 +289,9 @@ class PacketProcessor(object):
             return
 
         device_id = utils.get_device_id(device_mac, self._host_state)
-
-        flow_key = (
-             src_ip, src_port, dst_ip, dst_port, protocol
-        )
-        flow_id = '-'.join([str(item) for item in flow_key])
+        packet_flow_key = get_packet_flow_key(pkt, direction)
+        packet_flow_key_fw = get_packet_flow_key(pkt, PacketDirection.FORWARD)
+        packet_flow_key_bw = get_packet_flow_key(pkt, PacketDirection.REVERSE)
 
         if device_id in self._host_state.device_whitelist:
             with self._host_state.lock:
@@ -298,14 +299,19 @@ class PacketProcessor(object):
                 if device_id not in flow_features_dict:
                     flow = Flow(pkt, direction)
                     flow.add_packet(pkt, direction)
-                    flow_features_dict[device_id] = {flow_id: flow}
+                    flow_features_dict[device_id] = {packet_flow_key: flow}
                 else:
-                    if flow_id in flow_features_dict[device_id]:
-                        flow_features_dict[device_id][flow_id].add_packet(pkt, direction)
+                    # flujo en misma direccion
+                    if packet_flow_key_fw in flow_features_dict[device_id] or \
+                            packet_flow_key_bw in flow_features_dict[
+                                device_id]:
+                        flow_features_dict[device_id][packet_flow_key
+                                                      ].add_packet(
+                                                          pkt, direction)
                     else:
                         flow = Flow(pkt, direction)
                         flow.add_packet(pkt, direction)
-                        flow_features_dict[device_id][flow_id] = flow
+                        flow_features_dict[device_id][packet_flow_key] = flow
 
             return device_id
         return None

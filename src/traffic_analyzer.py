@@ -7,10 +7,13 @@ import time
 import utils
 import itertools
 import pandas as pd
+import datetime
+from os import path
+from pathlib import Path
 
 from host_state import HostState
 
-ANALYSIS_INTERVAL = 10
+ANALYSIS_INTERVAL = 20
 
 
 class TrafficAnalyzer(object):
@@ -94,10 +97,11 @@ class TrafficAnalyzer(object):
         for device_id in devices_to_analyze:
             key_to_extract = {
                 "src_ip", "dst_ip", "src_port", "dst_port", "protocol",
-                "fwd_pkt_len_max", "fwd_pkt_len_min", "fwd_pkt_len_mean",
+                "fwd_pkt_len_max", "fwd_pkt_len_min", "fwd_pkt_len_std",
                 "flow_iat_mean", "flow_iat_max", "fwd_iat_mean", "fwd_iat_max",
                 "fwd_header_len", "fwd_pkts_s", "pkt_len_min", "pkt_len_max",
-                "pkt_len_std", "ack_flag_cnt", "init_fwd_win_byts"
+                "pkt_len_std", "ack_flag_cnt", "init_fwd_win_byts",
+                "fwd_seg_size_min"
                               }
             if device_id in features_dict:
                 features_list = []
@@ -106,7 +110,9 @@ class TrafficAnalyzer(object):
                     extracted_dict = dict((key, flow_features[key])
                                           for key in key_to_extract
                                           if key in flow_features)
-                    features_list.append(extracted_dict)
+                    print(flowId)
+                    features_list.append(
+                        rename_from_cicflowmeter_to_CICDDos2019(extracted_dict))
             # groups = itertools.groupby(device_traffic,
             #                           key=lambda element: element[0])
             # df = pd.DataFrame(device_traffic)
@@ -115,9 +121,16 @@ class TrafficAnalyzer(object):
             # df["IAT"] = flows["time_stamp"].diff(1)
             # for packet in device_traffic:
             #    print(packet)
-
-                print(features_list)
-                flows_by_device_id_dict[device_id] = extracted_dict
+                
+                filename = device_id + "_"
+                filename += datetime.datetime.fromtimestamp(
+                    self._last_analysis_ts).replace(
+                    microsecond=0).isoformat().replace(":", "")
+                filename += ".csv"
+                filename = path.join(utils.home_dir, "captures", filename)
+                pd.DataFrame(features_list).to_csv(filename, index=False)
+                # print(features_list)
+                flows_by_device_id_dict[device_id] = features_list
 
         return (window_duration, flows_by_device_id_dict)
 
@@ -142,3 +155,50 @@ class TrafficAnalyzer(object):
        # victim_devices.append(device_id)
         utils.log('[Analyzer] analysis result:', False)
         return victim_devices
+
+
+def rename_from_cicflowmeter_to_CICDDos2019(cicflowmeter: dict) -> dict:
+    """Permite generar un dicionario con nombrado
+    de cararcterísticas de la colección CICDDos2019
+    partiendo de un diccionario de extracción
+    de la versión python de cicflowmeter
+
+    Args:
+        cicflowmeter (dict): diccionario resultado de la captura
+        de tráfico realizada por cicflowmeter
+
+    Returns:
+        dict: Diccionario con carácterísticas evaluable por
+        algoritmos ML entrenados con CICDDos2019
+    """
+    CICDDoS2019 = {}
+    CICDDoS2019["Fwd Packet Length Max"] = cicflowmeter["fwd_pkt_len_max"]
+    CICDDoS2019["Fwd Packet Length Min"] = cicflowmeter["fwd_pkt_len_min"]
+    CICDDoS2019["Fwd Packet Length Std"] = cicflowmeter["fwd_pkt_len_std"]
+    CICDDoS2019["Flow IAT Mean"] = cicflowmeter["flow_iat_mean"]
+    CICDDoS2019["Flow IAT Max"] = cicflowmeter["flow_iat_max"]
+    CICDDoS2019["Fwd IAT Mean"] = cicflowmeter["fwd_iat_mean"]
+    CICDDoS2019["Fwd IAT Max"] = cicflowmeter["fwd_iat_max"]
+    CICDDoS2019["Fwd Header Length"] = cicflowmeter["fwd_header_len"]
+    CICDDoS2019["Fwd Packets/s"] = cicflowmeter["fwd_pkts_s"]
+    CICDDoS2019["Min Packet Length"] = cicflowmeter["pkt_len_min"]
+    CICDDoS2019["Max Packet Length"] = cicflowmeter["pkt_len_max"]
+    CICDDoS2019["Packet Length Std"] = cicflowmeter["pkt_len_std"]
+    CICDDoS2019["ACK Flag Count"] = cicflowmeter["ack_flag_cnt"]
+    CICDDoS2019["Init_Win_bytes_forward"] = cicflowmeter["init_fwd_win_byts"]
+    CICDDoS2019["min_seg_size_forward"] = cicflowmeter["fwd_seg_size_min"]
+    return CICDDoS2019
+
+if __name__ == "__main__":
+    filename = path.join(utils.home_dir, "captures",
+                         datetime.datetime.fromtimestamp(
+                    time.time()).replace(
+                    microsecond=0).isoformat().replace(":", "") + ".csv")
+    cars = [
+    {'No': 1, 'Company': 'Ferrari', 'Car Model': '488 GTB'},
+    {'No': 2, 'Company': 'Porsche', 'Car Model': '918 Spyder'},
+    {'No': 3, 'Company': 'Bugatti', 'Car Model': 'La Voiture Noire'},
+    {'No': 4, 'Company': 'Rolls Royce', 'Car Model': 'Phantom'},
+    {'No': 5, 'Company': 'BMW', 'Car Model': 'BMW X7'},
+    ]
+    pd.DataFrame(cars).to_csv(filename)

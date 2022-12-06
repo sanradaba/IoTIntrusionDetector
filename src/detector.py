@@ -25,7 +25,7 @@ WINDOWS_STARTUP_TEXT = """
 Detector de intrusiones IoT
 ======================================
 
-Corriendo en la interfaz: {0}
+Adapter: {0}
 IP: {1}
 
 Puedes visualizar la intefaz de usuario en la url http://{1}:{2}

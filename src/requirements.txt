@@ -6,3 +6,4 @@ netifaces
 flask
 scikit-learn
 pandas
+keras

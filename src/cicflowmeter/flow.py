@@ -178,12 +178,12 @@ class Flow:
             "bwd_pkts_b_avg": float(
                 flow_bytes.get_packets_per_bulk(PacketDirection.REVERSE)
             ),
-            "fwd_blk_rate_avg": float(
-                flow_bytes.get_bulk_rate(PacketDirection.FORWARD)
-            ),
-            "bwd_blk_rate_avg": float(
-                flow_bytes.get_bulk_rate(PacketDirection.REVERSE)
-            ),
+            # "fwd_blk_rate_avg": float(
+            #   flow_bytes.get_bulk_rate(PacketDirection.FORWARD)
+            # ),
+            # "bwd_blk_rate_avg": float(
+            #   flow_bytes.get_bulk_rate(PacketDirection.REVERSE)
+            # ),
         }
 
         # Duplicated features
