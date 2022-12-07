@@ -388,3 +388,15 @@ def rename_device():
     id = request.form['id']
     GLOBAL_CONTEXT['device_registry'].set_device_name(id, name)
     return flask.redirect('/')
+
+
+@app.route('/get_attack_details/<device_id>', methods=['GET'])
+def get_attack_details(device_id):
+    output_dict = {}
+    host_state = get_host_state()
+    if host_state is not None:
+        with host_state.lock:
+            if device_id in host_state.detected_attacks_dict:
+                output_dict = host_state.detected_attacks_dict[device_id]
+
+    return json.dumps(output_dict, indent=2)

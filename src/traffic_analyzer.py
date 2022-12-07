@@ -5,15 +5,14 @@ Analizador de tráfico
 import threading
 import time
 import utils
-import itertools
 import pandas as pd
 import datetime
 from os import path
-from pathlib import Path
+from neural_network import DDoSDetector
 
 from host_state import HostState
 
-ANALYSIS_INTERVAL = 20
+ANALYSIS_INTERVAL = 60
 
 
 class TrafficAnalyzer(object):
@@ -30,6 +29,7 @@ class TrafficAnalyzer(object):
         self._thread.daemon = True
 
         self._last_analysis_ts = time.time()
+        self.DDoSDetector = DDoSDetector()
 
     def _analyzer_thread(self):
         while True:
@@ -37,7 +37,16 @@ class TrafficAnalyzer(object):
             with self._lock:
                 if not self._active:
                     return
-            utils.safe_run(self._analyze_traffic)
+            victim_devices = utils.safe_run(self._analyze_traffic)
+            if victim_devices:
+                with self._host_state.lock:
+                    detected_attacks_dict = \
+                        self._host_state.detected_attacks_dict
+                    for device_id in victim_devices:
+                        if device_id not in detected_attacks_dict:
+                            detected_attacks_dict[device_id] = []
+                        detected_attacks_dict[
+                            device_id].append(victim_devices[device_id])
 
     def start(self):
 
@@ -105,12 +114,13 @@ class TrafficAnalyzer(object):
                               }
             if device_id in features_dict:
                 features_list = []
+                flows_list = []
                 for flowId in features_dict[device_id]:
                     flow_features = features_dict[device_id][flowId].get_data()
                     extracted_dict = dict((key, flow_features[key])
                                           for key in key_to_extract
                                           if key in flow_features)
-                    print(flowId)
+                    flows_list.append(flowId)
                     features_list.append(
                         rename_from_cicflowmeter_to_CICDDos2019(extracted_dict))
             # groups = itertools.groupby(device_traffic,
@@ -121,7 +131,7 @@ class TrafficAnalyzer(object):
             # df["IAT"] = flows["time_stamp"].diff(1)
             # for packet in device_traffic:
             #    print(packet)
-                
+
                 filename = device_id + "_"
                 filename += datetime.datetime.fromtimestamp(
                     self._last_analysis_ts).replace(
@@ -130,12 +140,13 @@ class TrafficAnalyzer(object):
                 filename = path.join(utils.home_dir, "captures", filename)
                 pd.DataFrame(features_list).to_csv(filename, index=False)
                 # print(features_list)
-                flows_by_device_id_dict[device_id] = features_list
+                flows_by_device_id_dict[device_id] = (features_list,
+                                                      flows_list)
 
         return (window_duration, flows_by_device_id_dict)
 
     def _analyze_traffic(self):
-        victim_devices = []
+        victim_devices = {}
         devices_to_analyze = []
         with self._host_state.lock:
             devices_to_analyze = self._host_state.device_whitelist
@@ -145,15 +156,19 @@ class TrafficAnalyzer(object):
 
         window_duration, flows_by_device_id_dict = self._prepare_analysis_data(
             devices_to_analyze)
-
-        attack_detected = {self._last_analysis_ts: window_duration}
-#        with self._host_state.lock:
-#            if device_id not in self._host_state.detected_attacks_dict:
-#                self._host_state.detected_attacks_dict[device_id] = []
-#            self._host_state.detected_attacks_dict[device_id].append(
-#                attack_detected)
-       # victim_devices.append(device_id)
-        utils.log('[Analyzer] analysis result:', False)
+        iso_timestamp = datetime.datetime.fromtimestamp(
+                    self._last_analysis_ts).replace(
+                    microsecond=0).isoformat()
+        for device_id in flows_by_device_id_dict:
+            features_list, flows_keys = flows_by_device_id_dict[device_id]
+            flows_evaluation = self.DDoSDetector.evaluate(
+                features_list)
+            for flow_key, evaluation in zip(flows_keys, flows_evaluation):
+                if 1 == evaluation:
+                    victim_devices[device_id] = iso_timestamp
+                    utils.log('[Analyzer] device (id={}) {}: supected flow [{}]'
+                              .format(device_id, iso_timestamp, flow_key))
+                    break
         return victim_devices
 
 
@@ -189,16 +204,6 @@ def rename_from_cicflowmeter_to_CICDDos2019(cicflowmeter: dict) -> dict:
     CICDDoS2019["min_seg_size_forward"] = cicflowmeter["fwd_seg_size_min"]
     return CICDDoS2019
 
+
 if __name__ == "__main__":
-    filename = path.join(utils.home_dir, "captures",
-                         datetime.datetime.fromtimestamp(
-                    time.time()).replace(
-                    microsecond=0).isoformat().replace(":", "") + ".csv")
-    cars = [
-    {'No': 1, 'Company': 'Ferrari', 'Car Model': '488 GTB'},
-    {'No': 2, 'Company': 'Porsche', 'Car Model': '918 Spyder'},
-    {'No': 3, 'Company': 'Bugatti', 'Car Model': 'La Voiture Noire'},
-    {'No': 4, 'Company': 'Rolls Royce', 'Car Model': 'Phantom'},
-    {'No': 5, 'Company': 'BMW', 'Car Model': 'BMW X7'},
-    ]
-    pd.DataFrame(cars).to_csv(filename)
+    ta = TrafficAnalyzer()
