@@ -20,7 +20,8 @@ class PacketCapture(object):
         self._lock = threading.Lock()
         self._active = True
 
-        self._thread = threading.Thread(target=self._capture_packets)
+        self._thread = threading.Thread(target=self._capture_packets,
+                                        name='Packet-Capture')
         self._thread.daemon = True
 
     def start(self):

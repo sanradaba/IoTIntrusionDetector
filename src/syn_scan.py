@@ -29,7 +29,8 @@ class SynScan(object):
         self._lock = threading.Lock()
         self._active = False
 
-        self._thread = threading.Thread(target=self._syn_scan_thread)
+        self._thread = threading.Thread(target=self._syn_scan_thread,
+                                        name='SYN-Scanning')
         self._thread.daemon = True
 
     def start(self):

@@ -64,7 +64,7 @@
                     <dd>Fabricante: {{device['device_vendor']}}</dd></div>
                 <div class="col-lg-3 border-top"><dl><dt>IP: {{device['device_ip']}}</dt> <dd>MAC: {{device['device_mac']}}</dd><dd>{{device['netdisco_name']}}</dd></dl></div>
                 <div class="col-lg-3 border-top">
-                    {% if device['is_inspected'] %}<p><span class="glyphicon glyphicon-eye-open"></span> Monitorizado</p>{% else%}<p><span class="glyphicon glyphicon-signal"></span> Conectado</p> {% endif %} 
+                    {% if device['is_inspected'] %}<p><span class="glyphicon glyphicon-eye-open"></span> Monitorizando</p>{% else%}<p><span class="glyphicon glyphicon-signal"></span> Conectado</p> {% endif %} 
                     {% if device['has_been_attacked'] %}<p><a href="/get_attack_details/{{device['device_id']}}" target="_blank"><span class="glyphicon glyphicon-warning-sign"></span> Ataque detectado</a></p> {% endif %}
                 </div>
                 <div class="col-lg-3 border-top">

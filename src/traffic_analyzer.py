@@ -12,7 +12,48 @@ from neural_network import DDoSDetector
 
 from host_state import HostState
 
-ANALYSIS_INTERVAL = 60
+"""equivalencias
+
+    Returns: equi
+        _type_: _description_
+"""
+
+
+ANALYSIS_INTERVAL = 30
+
+CICDDos2019_cicflowmeter_equivalences = {
+    "Source IP": "src_ip",
+    "Source Port": "src_port",
+    "Destination IP": "dst_ip",
+    "Destination Port": "dst_port",
+    "Protocol": "protocol",
+    "Flow Duration": "flow_duration",
+    "Fwd Packet Length Max": "fwd_pkt_len_max",
+    "Bwd Packet Length Max": "bwd_pkt_len_max",
+    "Bwd Packet Length Min": "bwd_pkt_len_min",
+    "Fwd Packet Length Min": "fwd_pkt_len_min",
+    "Fwd Packet Length Std": "fwd_pkt_len_std",
+    "Flow IAT Mean": "flow_iat_mean",
+    "Flow IAT Max": "flow_iat_max",
+    "Fwd IAT Mean": "fwd_iat_mean",
+    "Fwd IAT Max": "fwd_iat_max",
+    "Fwd Header Length": "fwd_header_len",
+    "Fwd Packets/s": "fwd_pkts_s",
+    "Min Packet Length": "pkt_len_min",
+    "Max Packet Length": "pkt_len_max",
+    "Packet Length Std": "pkt_len_std",
+    "ACK Flag Count": "ack_flag_cnt",
+    "Init_Win_bytes_forward": "init_fwd_win_byts",
+    "Init_Win_bytes_backward": "init_bwd_win_byts",
+    "min_seg_size_forward": "fwd_seg_size_min",
+    "Subflow Fwd Bytes": "subflow_fwd_byts",
+    "Subflow Bwd Bytes": "subflow_bwd_byts",
+    "Total Length of Bwd Packets": "totlen_bwd_pkts",
+    "Packet Length Variance": "pkt_len_var",
+    "Bwd Packets/s": "bwd_pkts_s",
+    "Flow Bytes/s": "flow_byts_s",
+    "Bwd Header Length": "bwd_header_len",
+}
 
 
 class TrafficAnalyzer(object):
@@ -25,7 +66,8 @@ class TrafficAnalyzer(object):
         self._lock = threading.Lock()
         self._active = True
 
-        self._thread = threading.Thread(target=self._analyzer_thread)
+        self._thread = threading.Thread(target=self._analyzer_thread,
+                                        name='analyzer')
         self._thread.daemon = True
 
         self._last_analysis_ts = time.time()
@@ -37,16 +79,19 @@ class TrafficAnalyzer(object):
             with self._lock:
                 if not self._active:
                     return
-            victim_devices = utils.safe_run(self._analyze_traffic)
+            victim_devices = self._analyze_traffic()
             if victim_devices:
                 with self._host_state.lock:
                     detected_attacks_dict = \
                         self._host_state.detected_attacks_dict
-                    for device_id in victim_devices:
+                    for device_id in victim_devices.keys():
                         if device_id not in detected_attacks_dict:
-                            detected_attacks_dict[device_id] = []
-                        detected_attacks_dict[
-                            device_id].append(victim_devices[device_id])
+                            detected_attacks_dict[device_id
+                                                  ] = [victim_devices[
+                                                      device_id]]
+                        else:
+                            detected_attacks_dict[
+                                device_id].append(victim_devices[device_id])
 
     def start(self):
 
@@ -104,14 +149,8 @@ class TrafficAnalyzer(object):
 
         flows_by_device_id_dict = {}
         for device_id in devices_to_analyze:
-            key_to_extract = {
-                "src_ip", "dst_ip", "src_port", "dst_port", "protocol",
-                "fwd_pkt_len_max", "fwd_pkt_len_min", "fwd_pkt_len_std",
-                "flow_iat_mean", "flow_iat_max", "fwd_iat_mean", "fwd_iat_max",
-                "fwd_header_len", "fwd_pkts_s", "pkt_len_min", "pkt_len_max",
-                "pkt_len_std", "ack_flag_cnt", "init_fwd_win_byts",
-                "fwd_seg_size_min"
-                              }
+            key_to_extract = CICDDos2019_cicflowmeter_equivalences.values()
+
             if device_id in features_dict:
                 features_list = []
                 flows_list = []
@@ -122,15 +161,8 @@ class TrafficAnalyzer(object):
                                           if key in flow_features)
                     flows_list.append(flowId)
                     features_list.append(
-                        rename_from_cicflowmeter_to_CICDDos2019(extracted_dict))
-            # groups = itertools.groupby(device_traffic,
-            #                           key=lambda element: element[0])
-            # df = pd.DataFrame(device_traffic)
-            # df["local"] = pd.to_datetime(df['time_stamp'], unit='s', utc=True)
-            # flows = df.groupby(["flow_id"])
-            # df["IAT"] = flows["time_stamp"].diff(1)
-            # for packet in device_traffic:
-            #    print(packet)
+                        rename_from_cicflowmeter_to_CICDDos2019(
+                            self.DDoSDetector.get_features(), extracted_dict))
 
                 filename = device_id + "_"
                 filename += datetime.datetime.fromtimestamp(
@@ -163,22 +195,29 @@ class TrafficAnalyzer(object):
             features_list, flows_keys = flows_by_device_id_dict[device_id]
             flows_evaluation = self.DDoSDetector.evaluate(
                 features_list)
+            victim_devices[device_id] = {"time_stamp": iso_timestamp,
+                                         "flow_keys": []}
             for flow_key, evaluation in zip(flows_keys, flows_evaluation):
                 if 1 == evaluation:
-                    victim_devices[device_id] = iso_timestamp
+                    victim_devices[device_id]["flow_keys"].append(flow_key)
                     utils.log('[Analyzer] device (id={}) {}: supected flow [{}]'
                               .format(device_id, iso_timestamp, flow_key))
-                    break
+            if not victim_devices[device_id]["flow_keys"]:
+                victim_devices = {}
         return victim_devices
 
 
-def rename_from_cicflowmeter_to_CICDDos2019(cicflowmeter: dict) -> dict:
+
+
+
+def rename_from_cicflowmeter_to_CICDDos2019(features: list, cicflowmeter: dict) -> dict:
     """Permite generar un dicionario con nombrado
     de cararcterísticas de la colección CICDDos2019
     partiendo de un diccionario de extracción
     de la versión python de cicflowmeter
 
     Args:
+        features (list): Lista de características a extraer
         cicflowmeter (dict): diccionario resultado de la captura
         de tráfico realizada por cicflowmeter
 
@@ -187,21 +226,9 @@ def rename_from_cicflowmeter_to_CICDDos2019(cicflowmeter: dict) -> dict:
         algoritmos ML entrenados con CICDDos2019
     """
     CICDDoS2019 = {}
-    CICDDoS2019["Fwd Packet Length Max"] = cicflowmeter["fwd_pkt_len_max"]
-    CICDDoS2019["Fwd Packet Length Min"] = cicflowmeter["fwd_pkt_len_min"]
-    CICDDoS2019["Fwd Packet Length Std"] = cicflowmeter["fwd_pkt_len_std"]
-    CICDDoS2019["Flow IAT Mean"] = cicflowmeter["flow_iat_mean"]
-    CICDDoS2019["Flow IAT Max"] = cicflowmeter["flow_iat_max"]
-    CICDDoS2019["Fwd IAT Mean"] = cicflowmeter["fwd_iat_mean"]
-    CICDDoS2019["Fwd IAT Max"] = cicflowmeter["fwd_iat_max"]
-    CICDDoS2019["Fwd Header Length"] = cicflowmeter["fwd_header_len"]
-    CICDDoS2019["Fwd Packets/s"] = cicflowmeter["fwd_pkts_s"]
-    CICDDoS2019["Min Packet Length"] = cicflowmeter["pkt_len_min"]
-    CICDDoS2019["Max Packet Length"] = cicflowmeter["pkt_len_max"]
-    CICDDoS2019["Packet Length Std"] = cicflowmeter["pkt_len_std"]
-    CICDDoS2019["ACK Flag Count"] = cicflowmeter["ack_flag_cnt"]
-    CICDDoS2019["Init_Win_bytes_forward"] = cicflowmeter["init_fwd_win_byts"]
-    CICDDoS2019["min_seg_size_forward"] = cicflowmeter["fwd_seg_size_min"]
+    for key in features:
+        CICDDoS2019[key] = cicflowmeter[
+            CICDDos2019_cicflowmeter_equivalences[key]]
     return CICDDoS2019
 
 

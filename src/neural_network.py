@@ -5,15 +5,13 @@ from keras.models import load_model
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import QuantileTransformer
+from os import path
 
 # características del tráfico seleccionadas para los pronósticos
 # comunes a cicflowmeter y a la colección CICDDoS2019
-FEATURES = ['Fwd Packet Length Max', 'Fwd Packet Length Min',
-            'Fwd Packet Length Std', 'Flow IAT Mean', 'Flow IAT Max',
-            'Fwd IAT Mean', 'Fwd IAT Max', 'Fwd Header Length',
-            'Fwd Packets/s', 'Min Packet Length', 'Max Packet Length',
-            'Packet Length Std', 'ACK Flag Count', 'Init_Win_bytes_forward',
-            'min_seg_size_forward']
+
+
+MODEL_PATH = "src/prediction_models/keras/17features"
 
 
 class DDoSDetector(object):
@@ -25,15 +23,16 @@ class DDoSDetector(object):
         return cls.instance
 
     def __init__(self):
-        self.model = load_model("src/prediction_models/keras")
+        self.model = load_model(MODEL_PATH)
+        self.features = read_features(MODEL_PATH)
 
     def evaluate(self, traffic_features):
         """Realiza la evaluación de los flujos de tráfico
-        extraídos con cicflowmeter e intenta predecir si 
+        extraídos con cicflowmeter e intenta predecir si
         tiene los sintomas de un ataque DDoS
 
         Args:
-            traffic_features (_type_): dataframe con las carácterísticas 
+            traffic_features (_type_): dataframe con las carácterísticas
             del tráfico de red a analizar
 
         Returns:
@@ -41,14 +40,18 @@ class DDoSDetector(object):
             y 0 significa tráfico normal (BENIGN)
         """
         new_x = pd.DataFrame(traffic_features)
+        new_x = prepare_data(self.features, new_x)
         xTest = np.asarray(new_x)
         prediction = self.model.predict(xTest)
         prediction = np.argmax(prediction, axis=1)
         return prediction
 
+    def get_features(self):
+        return self.features.copy()
 
-def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Realiza la preparación de datos idéntica 
+
+def prepare_data(features, df: pd.DataFrame) -> pd.DataFrame:
+    """Realiza la preparación de datos idéntica
     a la que se realizó para entrenar na RNA
 
     Args:
@@ -61,29 +64,44 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     max_val = 99999
     df.columns = df.columns.str.strip()
-    df = df[FEATURES]
+    df = df[features]
     df = df.replace('Infinity', max_val)
     x = df.values
-    scaler = QuantileTransformer(n_quantiles=1000, random_state=42)
-    scaled_df = scaler.fit_transform(x)
+    # scaler = QuantileTransformer(n_quantiles=1000, random_state=42)
+    # scaled_df = scaler.fit_transform(x)
+    scaled_df = (df-df.mean())/df.std()
     x = pd.DataFrame(scaled_df)
     return x
 
 
-def read_file(filename):
-    max_val = 99999
-    with open("C:\\Users\\ingsr\\workspace\\TFM\\PEC3\\cmpt980\\code\\features.txt") as f:
+def read_features(features_file_path) -> list:
+    """lee el fichero de características con que fue entrenada
+    la RNA. El fichero debe contener una característica de cicflowmeter por 
+    cada línea
+
+    Args:
+        path (str): ruta donde leer el fichero features.txt
+    Returns:
+        Array con características del fichero
+    """
+    with open(features_file_path + path.sep + "features.txt") as f:
         features = [feature.strip() for feature in f]
     features.remove('Label')
+    return features
+
+
+def read_file(filename):
+    features = read_features("C:\\Users\\ingsr\\workspace\\TFM\\PEC3\\IoTIntrusionDetector\\src\\prediction_models\\keras\\17features")
+    print(features)
     df = pd.read_csv(filename)
-    return prepare_data(df)
+    return prepare_data(features, df)
 
 
 if __name__ == "__main__":
     new_x = pd.DataFrame()
-    new_x = new_x.append(read_file("C:\\Users\\ingsr\\iot-intrusion-detector\\captures\\s81d0a280fa_2022-12-07T180248.csv"))
-    print(new_x)
-    model = load_model("C:\\Users\\ingsr\\workspace\\TFM\\PEC3\\IoTIntrusionDetector\\src\\prediction_models\\keras")
+    new_x = new_x.append(read_file("C:\\Users\\ingsr\\iot-intrusion-detector\\captures\\sd96f293d4e_2022-12-08T133250.csv"))
+    print(new_x.info)
+    model = load_model("C:\\Users\\ingsr\\workspace\\TFM\\PEC3\\IoTIntrusionDetector\\src\\prediction_models\\keras\\17features")
     xTest = np.asarray(new_x)
     print(xTest)
     prediction = np.argmax(model.predict(xTest), axis=1)

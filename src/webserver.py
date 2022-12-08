@@ -6,8 +6,8 @@ import utils
 import time
 import json
 import host_blocklist
-import device_identification
 from naming import ConstantsNamespace
+from flask import jsonify
 
 
 GLOBAL_CONTEXT = {'host_state': None, 'device_registry': None}
@@ -392,11 +392,12 @@ def rename_device():
 
 @app.route('/get_attack_details/<device_id>', methods=['GET'])
 def get_attack_details(device_id):
-    output_dict = {}
+    output_dict = []
     host_state = get_host_state()
     if host_state is not None:
         with host_state.lock:
             if device_id in host_state.detected_attacks_dict:
                 output_dict = host_state.detected_attacks_dict[device_id]
 
-    return json.dumps(output_dict, indent=2)
+        salida = json.dumps(output_dict, indent=2)
+    return jsonify(output_dict)

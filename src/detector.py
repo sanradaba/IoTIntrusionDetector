@@ -28,7 +28,7 @@ Detector de intrusiones IoT
 Adapter: {0}
 IP: {1}
 
-Puedes visualizar la intefaz de usuario en la url http://{1}:{2}
+Puedes visualizar la intefaz de usuario en la url: http://{1}:{2}
 
 Para apagarlo simplemente cierre la ventana o pulse ctrl + C
 

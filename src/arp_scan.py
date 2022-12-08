@@ -29,7 +29,8 @@ class ArpScan(object):
         self._lock = threading.Lock()
         self._active = False
 
-        self._thread = threading.Thread(target=self._arp_scan_thread)
+        self._thread = threading.Thread(target=self._arp_scan_thread,
+                                        name='ARP-Scanning')
         self._thread.daemon = True
 
     def start(self):

@@ -274,13 +274,13 @@ class PacketProcessor(object):
 
         # Determine flow direction
         if src_mac == host_mac:
-            direction = PacketDirection.FORWARD
+            direction = PacketDirection.REVERSE
             device_mac = dst_mac
             device_port = dst_port
             remote_ip = src_ip
             remote_port = src_port
         elif dst_mac == host_mac:
-            direction = PacketDirection.REVERSE
+            direction = PacketDirection.FORWARD
             device_mac = src_mac
             device_port = src_port
             remote_ip = dst_ip

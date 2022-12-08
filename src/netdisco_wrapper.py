@@ -29,7 +29,8 @@ class NetdiscoWrapper(object):
         self._netdisco_path = self._get_netdisco_path()
 
     def start(self):
-        th = threading.Thread(target=self._start_thread)
+        th = threading.Thread(target=self._start_thread,
+                              name='NetDisco')
         th.daemon = True
         th.start()
 
@@ -47,7 +48,7 @@ class NetdiscoWrapper(object):
 
         return os.path.join(
             os.path.expanduser('~'),
-            'princeton-iot-inspector',
+            utils.DEFAULT_HOME_DIR_NAME,
             exe_name)
 
     def _run_netdisco(self, netdis):
@@ -74,6 +75,7 @@ class NetdiscoWrapper(object):
                         .setdefault(device_id, []).append(device_info)
 
         netdis.stop()
+
 
 def test():
     n = NetdiscoWrapper(None)
