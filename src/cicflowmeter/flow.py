@@ -113,10 +113,10 @@ class Flow:
             "fwd_pkt_len_min": float(packet_length.get_min(PacketDirection.FORWARD)),
             "fwd_pkt_len_mean": float(packet_length.get_mean(PacketDirection.FORWARD)),
             "fwd_pkt_len_std": float(packet_length.get_std(PacketDirection.FORWARD)),
-            # "bwd_pkt_len_max": float(packet_length.get_max(PacketDirection.REVERSE)),
-            # "bwd_pkt_len_min": float(packet_length.get_min(PacketDirection.REVERSE)),
-            # "bwd_pkt_len_mean": float(packet_length.get_mean(PacketDirection.REVERSE)),
-            # "bwd_pkt_len_std": float(packet_length.get_std(PacketDirection.REVERSE)),
+            "bwd_pkt_len_max": float(packet_length.get_max(PacketDirection.REVERSE)),
+            "bwd_pkt_len_min": float(packet_length.get_min(PacketDirection.REVERSE)),
+            "bwd_pkt_len_mean": float(packet_length.get_mean(PacketDirection.REVERSE)),
+            "bwd_pkt_len_std": float(packet_length.get_std(PacketDirection.REVERSE)),
             "pkt_len_max": packet_length.get_max(),
             "pkt_len_min": packet_length.get_min(),
             "pkt_len_mean": float(packet_length.get_mean()),
@@ -136,19 +136,19 @@ class Flow:
             "fwd_iat_min": float(forward_iat["min"]),
             "fwd_iat_mean": float(forward_iat["mean"]),
             "fwd_iat_std": float(forward_iat["std"]),
-            # "bwd_iat_tot": float(backward_iat["total"]),
-            # "bwd_iat_max": float(backward_iat["max"]),
-            # "bwd_iat_min": float(backward_iat["min"]),
-            # "bwd_iat_mean": float(backward_iat["mean"]),
-            # "bwd_iat_std": float(backward_iat["std"]),
+            "bwd_iat_tot": float(backward_iat["total"]),
+            "bwd_iat_max": float(backward_iat["max"]),
+            "bwd_iat_min": float(backward_iat["min"]),
+            "bwd_iat_mean": float(backward_iat["mean"]),
+            "bwd_iat_std": float(backward_iat["std"]),
             # Flags statistics
-            # "fwd_psh_flags": flag_count.has_flag("PSH", PacketDirection.FORWARD),
+            "fwd_psh_flags": flag_count.has_flag("PSH", PacketDirection.FORWARD),
             # "bwd_psh_flags": flag_count.has_flag("PSH", PacketDirection.REVERSE),
-            # "fwd_urg_flags": flag_count.has_flag("URG", PacketDirection.FORWARD),
+            "fwd_urg_flags": flag_count.has_flag("URG", PacketDirection.FORWARD),
             # "bwd_urg_flags": flag_count.has_flag("URG", PacketDirection.REVERSE),
             "fin_flag_cnt": flag_count.has_flag("FIN"),
             "syn_flag_cnt": flag_count.has_flag("SYN"),
-            # "rst_flag_cnt": flag_count.has_flag("RST"),
+            "rst_flag_cnt": flag_count.has_flag("RST"),
             # "psh_flag_cnt": flag_count.has_flag("PSH"),
             "ack_flag_cnt": flag_count.has_flag("ACK"),
             # "urg_flag_cnt": flag_count.has_flag("URG"),
@@ -187,13 +187,13 @@ class Flow:
         }
 
         # Duplicated features
-        data["fwd_seg_size_avg"] = data["fwd_pkt_len_mean"]
+        # data["fwd_seg_size_avg"] = data["fwd_pkt_len_mean"]
         # data["bwd_seg_size_avg"] = data["bwd_pkt_len_mean"]
-        # data["cwe_flag_count"] = data["fwd_urg_flags"]
-        # data["subflow_fwd_pkts"] = data["tot_fwd_pkts"]
-        # data["subflow_bwd_pkts"] = data["tot_bwd_pkts"]
-        # data["subflow_fwd_byts"] = data["totlen_fwd_pkts"]
-        # data["subflow_bwd_byts"] = data["totlen_bwd_pkts"]
+        data["cwe_flag_count"] = data["fwd_urg_flags"]
+        data["subflow_fwd_pkts"] = data["tot_fwd_pkts"]
+        data["subflow_bwd_pkts"] = data["tot_bwd_pkts"]
+        data["subflow_fwd_byts"] = data["totlen_fwd_pkts"]
+        data["subflow_bwd_byts"] = data["totlen_bwd_pkts"]
 
         return data
 

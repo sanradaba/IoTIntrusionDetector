@@ -43,7 +43,7 @@ class PacketProcessor(object):
         if sc.TCP in pkt and pkt[sc.TCP].flags == 'SA' and sc.IP in pkt:
             tcp_layer = pkt[sc.TCP]
             if tcp_layer.dport == SYN_SCAN_SOURCE_PORT and tcp_layer.ack == SYN_SCAN_SEQ_NUM + 1:
-                return self._process_syn_scan(pkt)
+                self._process_syn_scan(pkt)
 
         # Must have Ether frame and IP frame.
         if not (sc.Ether in pkt and sc.IP in pkt):
@@ -71,8 +71,8 @@ class PacketProcessor(object):
 
         # Commented out the following. We want to see traffic between device and gateway.
         # # Ignore traffic to and from the gateway's IP
-        # if self._host_state.gateway_ip in (pkt[sc.IP].src, pkt[sc.IP].dst):
-        #    return
+        if self._host_state.gateway_ip in (pkt[sc.IP].src, pkt[sc.IP].dst):
+            return
 
         # TCP/UDP
         if sc.TCP in pkt:
@@ -273,12 +273,14 @@ class PacketProcessor(object):
         payload_bytes = len(bytes(pkt[layer].payload))
 
         # Determine flow direction
+        # device -> gateway
         if src_mac == host_mac:
             direction = PacketDirection.REVERSE
             device_mac = dst_mac
             device_port = dst_port
             remote_ip = src_ip
             remote_port = src_port
+        # gateway -> device
         elif dst_mac == host_mac:
             direction = PacketDirection.FORWARD
             device_mac = src_mac

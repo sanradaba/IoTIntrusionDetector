@@ -1,0 +1,158 @@
+CUsersingsrworkspaceTFMPEC3cmpt980codepython ML_binary_classifier.py train features.txt scaler_19_sign
+running script run no scaler_19_sign
+Processing file DrDoS_DNS.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file DrDoS_DNS.csv , total samples is 5074413
+
+Processing file DrDoS_LDAP.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file DrDoS_LDAP.csv , total samples is 7255955
+
+Processing file DrDoS_MSSQL.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file DrDoS_MSSQL.csv , total samples is 11780453
+
+Processing file DrDoS_NetBIOS.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file DrDoS_NetBIOS.csv , total samples is 15875439
+
+Processing file DrDoS_NTP.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file DrDoS_NTP.csv , total samples is 17092446
+
+Processing file DrDoS_SNMP.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file DrDoS_SNMP.csv , total samples is 22253823
+
+Processing file DrDoS_SSDP.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file DrDoS_SSDP.csv , total samples is 24865197
+
+Processing file DrDoS_UDP.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file DrDoS_UDP.csv , total samples is 28001999
+
+Processing file Syn.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file Syn.csv , total samples is 29584680
+
+Processing file UDPLag.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file UDPLag.csv , total samples is 29955285
+
+train size  (23964228, 19)
+train labels  (23964228, 2)
+Valid size  (5991057, 19)
+Processing file LDAP.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file LDAP.csv , total samples is 2113234
+
+Processing file MSSQL.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file MSSQL.csv , total samples is 7889020
+
+Processing file NetBIOS.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file NetBIOS.csv , total samples is 11344919
+
+Processing file Portmap.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file Portmap.csv , total samples is 11536613
+
+Processing file Syn.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file Syn.csv , total samples is 15857154
+
+Processing file UDP.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file UDP.csv , total samples is 19639360
+
+Processing file UDPLag.csv
+
+sys1 DtypeWarning Columns (85) have mixed types.Specify dtype option on import or set low_memory=False.
+Processed file UDPLag.csv , total samples is 20364525
+
+test size  (20364525, 19)
+2022-12-10 120304.570145 I tensorflowcoreplatformcpu_feature_guard.cc193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations  AVX AVX2
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Model sequential
+__________________________________________________________________________________________
+ Layer (type)                           Output Shape                        Param #
+==========================================================================================
+ dense (Dense)                          (None, 64)                          1280
+
+ dropout (Dropout)                      (None, 64)                          0
+
+ dense_1 (Dense)                        (None, 64)                          4160
+
+ dropout_1 (Dropout)                    (None, 64)                          0
+
+ dense_2 (Dense)                        (None, 64)                          4160
+
+ dropout_2 (Dropout)                    (None, 64)                          0
+
+ dense_3 (Dense)                        (None, 2)                           130
+
+==========================================================================================
+Total params 9,730
+Trainable params 9,730
+Non-trainable params 0
+__________________________________________________________________________________________
+None
+Epoch 110
+2396523965 [==============================] - 311s 13msstep - loss 9.5523e-04 - accuracy 0.9997 - val_loss 5.0293e-04 - val_accuracy 0.9998
+Epoch 210
+2396523965 [==============================] - 347s 14msstep - loss 4.9701e-04 - accuracy 0.9999 - val_loss 3.6072e-04 - val_accuracy 0.9999
+Epoch 310
+2396523965 [==============================] - 253s 11msstep - loss 3.9402e-04 - accuracy 0.9999 - val_loss 3.2720e-04 - val_accuracy 0.9999
+Epoch 410
+2396523965 [==============================] - 251s 10msstep - loss 3.5785e-04 - accuracy 0.9999 - val_loss 2.9687e-04 - val_accuracy 0.9999
+Epoch 510
+2396523965 [==============================] - 318s 13msstep - loss 3.3837e-04 - accuracy 0.9999 - val_loss 3.0148e-04 - val_accuracy 0.9999
+Epoch 610
+2396523965 [==============================] - 239s 10msstep - loss 3.1891e-04 - accuracy 0.9999 - val_loss 2.6668e-04 - val_accuracy 0.9999
+Epoch 710
+2396523965 [==============================] - 293s 12msstep - loss 3.0934e-04 - accuracy 0.9999 - val_loss 2.7372e-04 - val_accuracy 0.9999
+Epoch 810
+2396523965 [==============================] - 345s 14msstep - loss 3.0070e-04 - accuracy 0.9999 - val_loss 2.6427e-04 - val_accuracy 0.9999
+Epoch 910
+2396523965 [==============================] - 361s 15msstep - loss 2.8907e-04 - accuracy 0.9999 - val_loss 2.5216e-04 - val_accuracy 0.9999
+Epoch 1010
+2396523965 [==============================] - 320s 13msstep - loss 2.9044e-04 - accuracy 0.9999 - val_loss 2.4524e-04 - val_accuracy 0.9999
+WARNINGabslFound untraced functions such as _update_step_xla while saving (showing 1 of 1). These functions will not be directly callable after loading.
+636392636392 [==============================] - 1455s 2msstep - loss 0.0044 - accuracy 0.9991
+[0.0043539381586015224, 0.9991072416305542]
+636392636392 [==============================] - 1137s 2msstep
+
+ Accuracy
+0.9990952894801131
+
+ F1 score
+0.999546564016478
+
+ Recall
+0.999961393687868
+
+ Precision
+0.9991320783829656
+
+ confusion matrix
+
+[[   39325    17640]
+ [     784 20306776]]

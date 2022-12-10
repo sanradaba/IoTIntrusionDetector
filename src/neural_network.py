@@ -11,7 +11,7 @@ from os import path
 # comunes a cicflowmeter y a la colección CICDDoS2019
 
 
-MODEL_PATH = "src/prediction_models/keras/17features"
+MODEL_PATH = "src/prediction_models/keras/19feat"
 
 
 class DDoSDetector(object):
@@ -67,9 +67,9 @@ def prepare_data(features, df: pd.DataFrame) -> pd.DataFrame:
     df = df[features]
     df = df.replace('Infinity', max_val)
     x = df.values
-    # scaler = QuantileTransformer(n_quantiles=1000, random_state=42)
-    # scaled_df = scaler.fit_transform(x)
-    scaled_df = (df-df.mean())/df.std()
+    scaler = QuantileTransformer(n_quantiles=len(df.values), random_state=42)
+    scaled_df = scaler.fit_transform(x)
+    # scaled_df = (df-df.mean())/df.std()
     x = pd.DataFrame(scaled_df)
     return x
 
@@ -91,7 +91,7 @@ def read_features(features_file_path) -> list:
 
 
 def read_file(filename):
-    features = read_features("C:\\Users\\ingsr\\workspace\\TFM\\PEC3\\IoTIntrusionDetector\\src\\prediction_models\\keras\\17features")
+    features = read_features("C:\\Users\\ingsr\\workspace\\TFM\\PEC3\\IoTIntrusionDetector\\src\\prediction_models\\keras\\19feat")
     print(features)
     df = pd.read_csv(filename)
     return prepare_data(features, df)
@@ -99,9 +99,9 @@ def read_file(filename):
 
 if __name__ == "__main__":
     new_x = pd.DataFrame()
-    new_x = new_x.append(read_file("C:\\Users\\ingsr\\iot-intrusion-detector\\captures\\sd96f293d4e_2022-12-08T133250.csv"))
+    new_x = new_x.append(read_file("C:\\Users\\ingsr\\iot-intrusion-detector\\captures\\sd96f293d4e_2022-12-10T104826.csv"))
     print(new_x.info)
-    model = load_model("C:\\Users\\ingsr\\workspace\\TFM\\PEC3\\IoTIntrusionDetector\\src\\prediction_models\\keras\\17features")
+    model = load_model("C:\\Users\\ingsr\\workspace\\TFM\\PEC3\\IoTIntrusionDetector\\src\\prediction_models\\keras\\19feat")
     xTest = np.asarray(new_x)
     print(xTest)
     prediction = np.argmax(model.predict(xTest), axis=1)

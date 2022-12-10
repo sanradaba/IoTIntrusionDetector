@@ -19,7 +19,7 @@ from host_state import HostState
 """
 
 
-ANALYSIS_INTERVAL = 30
+ANALYSIS_INTERVAL = 60
 
 CICDDos2019_cicflowmeter_equivalences = {
     "Source IP": "src_ip",
@@ -33,6 +33,7 @@ CICDDos2019_cicflowmeter_equivalences = {
     "Bwd Packet Length Min": "bwd_pkt_len_min",
     "Fwd Packet Length Min": "fwd_pkt_len_min",
     "Fwd Packet Length Std": "fwd_pkt_len_std",
+    "Flow IAT Min": "flow_iat_min",
     "Flow IAT Mean": "flow_iat_mean",
     "Flow IAT Max": "flow_iat_max",
     "Fwd IAT Mean": "fwd_iat_mean",
@@ -114,13 +115,11 @@ class TrafficAnalyzer(object):
         utils.log('[Analyzer] Stopped.')
 
     def _clear_host_state_pending_data(self):
-        self._host_state.pending_dhcp_dict = {}
         self._host_state.pending_resolver_dict = {}
         self._host_state.pending_dns_dict = {}
         self._host_state.pending_flow_dict = {}
         self._host_state.pending_ua_dict = {}
         self._host_state.pending_tls_dict_list = []
-        self._host_state.pending_netdisco_dict = {}
         self._host_state.pending_syn_scan_dict = {}
 
     def _prepare_analysis_data(self, devices_to_analyze):
@@ -193,6 +192,7 @@ class TrafficAnalyzer(object):
                     microsecond=0).isoformat()
         for device_id in flows_by_device_id_dict:
             features_list, flows_keys = flows_by_device_id_dict[device_id]
+            print(flows_keys)
             flows_evaluation = self.DDoSDetector.evaluate(
                 features_list)
             victim_devices[device_id] = {"time_stamp": iso_timestamp,

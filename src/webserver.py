@@ -190,7 +190,7 @@ def get_device_list_helper():
                     if 'device_type' in device_info:
                         output_dict[device_id]['netdisco_name'] = device_info['device_type']
                         break
-        # Eliminar información netdisco tras mostrarla 
+        # Eliminar información netdisco tras mostrarla
         host_state.pending_netdisco_dict = {}
 
     # Fill out dhcp_name
